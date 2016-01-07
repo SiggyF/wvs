@@ -8,6 +8,7 @@
     "email": "fedor.baart@deltares.nl",
     "url": ""
   },
+  "license": "GPL-3.0",
   "files": [
     "dist"
   ],
@@ -42,5 +43,8 @@
   "scripts": {
     "prepublish": "gulp prepublish",
     "test": "gulp"
+  },
+  "dependencies": {
+    "tile-generator": "github:mapbox/tile-generator"
   }
 }
