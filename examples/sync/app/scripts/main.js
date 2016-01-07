@@ -1,5 +1,5 @@
 /* jshint devel:true */
-
+'use strict';
 $('#play').on('click', function(){
     _.each($('video'), function(element){
         element.play();
@@ -17,8 +17,11 @@ var videos = {
     a: document.getElementById('a'),
     b: document.getElementById('b')
 };
-function sync() {
-    videos.b.currentTime = videos.a.currentTime;
+function sync(maxDrift) {
+    // if
+    if (Math.abs(videos.b.currentTime - videos.a.currentTime) > maxDrift) {
+        videos.b.currentTime = videos.a.currentTime;
+    }
 }
 
 
@@ -37,4 +40,17 @@ _.each($('video'), function(element){
     });
 });
 
-$('#sync').on('click', sync);
+// allow for a little room, so we are not moving back and forth
+// setting it lower than 0.05 seems to result in issues in both FF and GC
+var maxDrift = 0.05;
+function keepInSync(){
+    // request a new frame
+    requestAnimationFrame(keepInSync);
+    // synchronize the videos
+    sync(maxDrift);
+}
+// keep doing this....
+keepInSync();
+
+//
+$('#sync').on('click', function(){sync(0.0);});
