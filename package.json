@@ -47,6 +47,7 @@
   "dependencies": {
     "fluent-ffmpeg": "^2.0.1",
     "lodash": "^3.10.1",
-    "tile-generator": "github:mapbox/tile-generator"
+    "tile-generator": "github:mapbox/tile-generator",
+    "tilebelt": "^1.0.1"
   }
 }
