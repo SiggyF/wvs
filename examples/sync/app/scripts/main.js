@@ -1,56 +1,104 @@
 /* jshint devel:true */
 'use strict';
-$('#play').on('click', function(){
-    _.each($('video'), function(element){
-        element.play();
-    });
-});
+// global system;
+var videoSystem;
 
-$('#pause').on('click', function(){
-    _.each($('video'), function(element){
-        element.pause();
-    });
-});
+function VideoSystem() {
+  // look up/define all videos
 
+  // allow for a little room, so we are not moving back and forth
+  // setting it lower than 0.05 seems to result in issues in both FF and GC
+  this.maxDrift = 0.05;
+}
 
-var videos = {
-    a: document.getElementById('a'),
-    b: document.getElementById('b')
-};
-function sync(maxDrift) {
-    // if
-    if (Math.abs(videos.b.currentTime - videos.a.currentTime) > maxDrift) {
-        videos.b.currentTime = videos.a.currentTime;
+VideoSystem.prototype.setLevel = function(level) {
+
+  var currentTime = 0;
+  if (_.get(this, 'first')) {
+    currentTime = this.first.currentTime;
+  };
+
+  var n  = Math.pow(2, level);
+
+  $('#videos').empty();
+  // create video elements
+  for(var j = 0; j < n; j++) {
+    for(var i = 0; i < n; i++) {
+      var name = 'movies/cat_' + level + '_' + i + '_' + j + '.mp4';
+      $('#videos').append(
+        $('<video controls />')
+          .attr('src', name)
+          .addClass('level' + level)
+      );
     }
+  }
+
+  this.videos = $('#videos video');
+  this.first = _.head(this.videos);
+  this.rest = _.slice(this.videos, 1);
+  this.first.currentTime = currentTime;
+};
+VideoSystem.prototype.play = function () {
+  // Play each video
+  this.first.play();
 }
-
-
-_.each($('video'), function(element){
-    $(element).on('loadedmetadata', function(evt) {
-        var video = evt.target;
-        var pb = $('#' + evt.target.id + '-progress');
-        pb.attr('max', evt.target.duration);
-        pb.attr('value', evt.target.currentTime);
-    });
-    $(element).on('progress', function(evt){
-    });
-    $(element).on('timeupdate', function(evt){
-        var pb = $('#' + evt.target.id + '-progress');
-        pb.attr('value', evt.target.currentTime);
-    });
-});
-
-// allow for a little room, so we are not moving back and forth
-// setting it lower than 0.05 seems to result in issues in both FF and GC
-var maxDrift = 0.05;
-function keepInSync(){
-    // request a new frame
-    requestAnimationFrame(keepInSync);
-    // synchronize the videos
-    sync(maxDrift);
+VideoSystem.prototype.pause = function() {
+  this.first.pause();
 }
-// keep doing this....
-keepInSync();
+VideoSystem.prototype.sync = function() {
+  var first = this.first;
+  var maxDrift = this.maxDrift;
+  // sync all status of videos to first
+  _.each(this.rest, function(other) {
+    // check all videos
+    if (!(first.paused) && other.paused) {
+      // it should have been started
+      other.play();
+    } else if (first.paused && !(other.paused)) {
+      // it should have paused
+      other.pause();
+    } else if (Math.abs(other.currentTime - first.currentTime) > maxDrift) {
+      // sync all times of videos to first
+      other.currentTime = first.currentTime;
+    }
+  });
+};
 
-//
-$('#sync').on('click', function(){sync(0.0);});
+VideoSystem.prototype.keepInSync = function(){
+  // request a new frame
+  var system = this;
+  function doSync() {
+    requestAnimationFrame(doSync);
+    system.sync();
+  };
+  // keep doing this....
+  doSync();
+};
+(function(){
+  videoSystem = new VideoSystem();
+  videoSystem.setLevel(2);
+  videoSystem.keepInSync();
+
+  $('#play').on('click', function(){
+    videoSystem.play();
+  });
+
+  // Pause all videos
+  $('#pause').on('click', function(){
+    videoSystem.pause();
+  });
+  //
+  $('#sync').on('click', function(){
+    videoSystem.sync();
+  });
+  $('#level-0').on('click', function(){
+    videoSystem.setLevel(0);
+  });
+  $('#level-1').on('click', function(){
+    videoSystem.setLevel(1);
+  });
+  $('#level-2').on('click', function(){
+    videoSystem.setLevel(2);
+  });
+
+})();
